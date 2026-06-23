@@ -1,0 +1,10 @@
+# Vim swap files
+*.swp
+*.swo
+*.swn
+*.swm
+*.swl
+
+# Python cache
+__pycache__/
+*.pyc
