@@ -3,9 +3,10 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
+        stage('Clone Repository') {
             steps {
-                git 'https://github.com/Jagannath-bite/flask-app.git'
+                git branch: 'main',
+                url: 'https://github.com/Jagannath-bite/flask-app.git'
             }
         }
 
@@ -15,7 +16,7 @@ pipeline {
             }
         }
 
-        stage('Remove Old Container') {
+        stage('Remove Existing Container') {
             steps {
                 sh 'docker rm -f flask-container || true'
             }
@@ -26,6 +27,5 @@ pipeline {
                 sh 'docker run -d -p 5000:5000 --name flask-container flask-demo'
             }
         }
-
     }
 }
