@@ -24,8 +24,18 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                sh 'docker run -d -p 5000:5000 --name flask-container flask-demo'
+                sh 'docker run -d --name flask-container -p 5000:5000 flask-demo'
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Application deployed successfully'
+        }
+
+        failure {
+            echo 'Pipeline failed'
         }
     }
 }
