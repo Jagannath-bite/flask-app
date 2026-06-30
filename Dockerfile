@@ -1,14 +1,12 @@
-FROM jenkins/jenkins:lts
+FROM python:3.12
 
-USER root
+WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y \
-    python3 \
-    python3-venv \
-    python3-pip \
-    git \
-    curl && \
-    apt-get clean
+COPY . .
 
-USER jenkins
+RUN pip install -r requirement.txt
+
+EXPOSE 5000
+
+CMD ["python","app.py"]
+  
