@@ -1,31 +1,64 @@
 pipeline {
+
     agent any
 
     stages {
 
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git branch: 'main',
-                url: 'https://github.com/Jagannath-bite/flask-app.git'
+                echo 'Checking out source code...'
+                checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Workspace Info') {
             steps {
-                sh 'docker build -t flask-demo .'
+                sh 'pwd'
+                sh 'ls -la'
             }
         }
 
-        stage('Remove Existing Container') {
+        stage('Python Version') {
             steps {
-                sh 'docker rm -f flask-container || true'
+                sh 'python3 --version'
             }
         }
 
-        stage('Run Container') {
+        stage('Install Dependencies') {
             steps {
-                sh 'docker run -d -p 5000:5000 --name flask-container flask-demo'
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
             }
+        }
+
+        stage('Run Application Test') {
+            steps {
+                sh '''
+                . venv/bin/activate
+                python3 app.py --help || true
+                '''
+            }
+        }
+
+    }
+
+    post {
+
+        always {
+            echo 'Cleaning Workspace'
+            cleanWs()
+        }
+
+        success {
+            echo 'Build Successful'
+        }
+
+        failure {
+            echo 'Build Failed'
         }
     }
 }
