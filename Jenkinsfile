@@ -22,6 +22,17 @@ pipeline {
             }
         }
 
+        stage('Trivy Filesystem Scan') {
+        steps {
+            sh '''
+            docker run --rm \
+            -v $(pwd):/src \
+            aquasec/trivy:latest \
+            fs /src
+            '''
+        }
+    }
+
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t flask-demo .'
