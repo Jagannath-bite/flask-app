@@ -1,12 +1,24 @@
 pipeline {
     agent any
 
+    tools {
+        sonarQube 'SonarScanner'
+    }
+
     stages {
 
         stage('Clone Repository') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/Jagannath-bite/flask-app.git'
+                    url: 'https://github.com/Jagannath-bite/flask-app.git'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv('LocalSonar') {
+                    sh 'sonar-scanner'
+                }
             }
         }
 
