@@ -23,18 +23,19 @@ pipeline {
         }
 
         stage('Trivy Filesystem Scan') {
-            steps {
-            sh '''
-            docker run --rm \
-            -v $(pwd):/src \
-            aquasec/trivy:latest \
-            fs \
-            --format json \
-            -o /src/trivy-fs-report.json \
-          /src
-            '''
-            }
-        }
+    steps {
+        sh '''
+        docker run --rm \
+        -v $(pwd):/src \
+        -v /var/jenkins_home/trivy-cache:/root/.cache/trivy \
+        aquasec/trivy:latest \
+        fs \
+        --format json \
+        -o /src/trivy-fs-report.json \
+        /src
+        '''
+    }
+}
 
         stage('Build Docker Image') {
             steps {
