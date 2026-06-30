@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        sonarQube 'SonarScanner'
-    }
-
     stages {
 
         stage('Clone Repository') {
@@ -16,8 +12,12 @@ pipeline {
 
         stage('SonarQube Scan') {
             steps {
-                withSonarQubeEnv('LocalSonar') {
-                    sh 'sonar-scanner'
+                script {
+                    def scannerHome = tool 'SonarScanner'
+
+                    withSonarQubeEnv('LocalSonar') {
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
                 }
             }
         }
