@@ -143,46 +143,13 @@ pipeline {
 
 
 
-        stage('Configure EKS Access') {
+       mkdir -p $WORKSPACE/.kube
 
-            steps {
+export KUBECONFIG=$WORKSPACE/.kube/config
 
-                withCredentials([usernamePassword(
-                    credentialsId: 'aws_cli',
-                    usernameVariable: 'AWS_ACCESS_KEY_ID',
-                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                )]) {
-
-
-                    sh '''
-
-                    export AWS_DEFAULT_REGION=$AWS_REGION
-
-
-                    echo "Updating kubeconfig"
-
-
-                    aws eks update-kubeconfig \
-                    --region $AWS_REGION \
-                    --name $EKS_CLUSTER
-
-
-
-                    echo "Checking cluster"
-
-
-                    kubectl get nodes
-
-
-                    '''
-
-                }
-
-            }
-
-        }
-
-
+aws eks update-kubeconfig \
+--region $AWS_REGION \
+--name $EKS_CLUSTER
 
 
         stage('Deploy Application to EKS') {
