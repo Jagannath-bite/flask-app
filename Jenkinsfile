@@ -216,7 +216,7 @@ pipeline {
 
 
                 kubectl apply \
-                -f k8s/flask-deployment.yaml
+                -f k8s/flask-deployment-service.yaml
 
 
 
