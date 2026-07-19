@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: flask-deployment
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: flask
+
+  template:
+
+    metadata:
+      labels:
+        app: flask
+
+    spec:
+
+      containers:
+      - name: flask
+
+        image: 893410593871.dkr.ecr.ap-south-1.amazonaws.com/employee-management:v1
+
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 5000
+
+---
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: flask-service
+
+spec:
+
+  selector:
+    app: flask
+
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+
+  type: LoadBalancer
