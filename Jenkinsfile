@@ -38,6 +38,7 @@ pipeline {
             steps {
 
                 sh '''
+                echo "Building Docker image"
 
                 docker build \
                 -t flask-app:latest .
@@ -71,6 +72,7 @@ pipeline {
                     aws sts get-caller-identity
 
 
+
                     echo "Logging into Amazon ECR"
 
 
@@ -98,8 +100,12 @@ pipeline {
 
                 sh '''
 
+                echo "Tagging image"
+
+
                 docker tag flask-app:latest \
                 $ECR_REPO:$IMAGE_TAG
+
 
 
                 docker tag flask-app:latest \
@@ -111,6 +117,7 @@ pipeline {
             }
 
         }
+
 
 
 
@@ -121,7 +128,8 @@ pipeline {
 
                 sh '''
 
-                echo "Pushing build image"
+                echo "Pushing image with build number"
+
 
                 docker push \
                 $ECR_REPO:$IMAGE_TAG
@@ -129,6 +137,7 @@ pipeline {
 
 
                 echo "Pushing latest image"
+
 
                 docker push \
                 $ECR_REPO:latest
@@ -143,13 +152,57 @@ pipeline {
 
 
 
-       mkdir -p $WORKSPACE/.kube
+        stage('Configure EKS Access') {
 
-export KUBECONFIG=$WORKSPACE/.kube/config
+            steps {
 
-aws eks update-kubeconfig \
---region $AWS_REGION \
---name $EKS_CLUSTER
+                withCredentials([usernamePassword(
+                    credentialsId: 'aws_cli',
+                    usernameVariable: 'AWS_ACCESS_KEY_ID',
+                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                )]) {
+
+
+                    sh '''
+
+                    export AWS_DEFAULT_REGION=$AWS_REGION
+
+
+                    echo "Creating kubeconfig"
+
+
+                    mkdir -p $WORKSPACE/.kube
+
+
+                    export KUBECONFIG=$WORKSPACE/.kube/config
+
+
+
+                    echo "Updating kubeconfig for EKS"
+
+
+                    aws eks update-kubeconfig \
+                    --region $AWS_REGION \
+                    --name $EKS_CLUSTER
+
+
+
+                    echo "Testing Kubernetes access"
+
+
+                    kubectl get nodes
+
+
+                    '''
+
+                }
+
+            }
+
+        }
+
+
+
 
 
         stage('Deploy Application to EKS') {
@@ -161,12 +214,15 @@ aws eks update-kubeconfig \
                 echo "Deploying Flask application"
 
 
+
                 kubectl apply \
                 -f k8s/flask-deployment.yaml
 
 
 
-                echo "Checking deployment"
+
+                echo "Waiting for deployment"
+
 
 
                 kubectl rollout status \
@@ -174,7 +230,17 @@ aws eks update-kubeconfig \
 
 
 
+
+                echo "Checking Pods"
+
+
+
                 kubectl get pods -o wide
+
+
+
+
+                echo "Checking Service"
 
 
 
@@ -192,6 +258,7 @@ aws eks update-kubeconfig \
 
 
 
+
     post {
 
 
@@ -202,14 +269,14 @@ aws eks update-kubeconfig \
         }
 
 
+
         failure {
 
-            echo 'Pipeline failed. Check console output.'
+            echo 'Pipeline failed. Check the console output.'
 
         }
 
 
     }
-
 
 }
