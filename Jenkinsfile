@@ -1,64 +1,64 @@
 pipeline {
-
     agent any
+
+    environment {
+        AWS_REGION = 'ap-south-1'
+        ECR_REPO = '893410593871.dkr.ecr.ap-south-1.amazonaws.com/employee-management'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
 
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code...'
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/Jagannath-bite/flask-app.git'
             }
         }
 
-        stage('Workspace Info') {
+        stage('Build Docker Image') {
             steps {
-                sh 'pwd'
-                sh 'ls -la'
+                sh 'docker build -t flask-app:latest .'
             }
         }
 
-        stage('Python Version') {
+        stage('Login to Amazon ECR') {
             steps {
-                sh 'python3 --version'
+                withCredentials([usernamePassword(
+                    credentialsId: 'aws-creds',
+                    usernameVariable: 'AWS_ACCESS_KEY_ID',
+                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                )]) {
+                    sh '''
+                        aws ecr get-login-password --region $AWS_REGION | \
+                        docker login --username AWS --password-stdin $ECR_REPO
+                    '''
+                }
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Tag Docker Image') {
             steps {
                 sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                sudo pip install --upgrade pip
-                sudo pip install -r requirements.txt
+                    docker tag flask-app:latest $ECR_REPO:$IMAGE_TAG
+                    docker tag flask-app:latest $ECR_REPO:latest
                 '''
             }
         }
 
-        stage('Run Application Test') {
+        stage('Push Docker Image') {
             steps {
                 sh '''
-                . venv/bin/activate
-                python3 app.py --help || true
+                    docker push $ECR_REPO:$IMAGE_TAG
+                    docker push $ECR_REPO:latest
                 '''
             }
         }
 
-    }
-
-    post {
-
-        always {
-            echo 'Cleaning Workspace'
-            cleanWs()
-        }
-
-        success {
-            echo 'Build Successful'
-        }
-
-        failure {
-            echo 'Build Failed'
+        stage('Verify Images') {
+            steps {
+                sh 'docker images'
+            }
         }
     }
 }
